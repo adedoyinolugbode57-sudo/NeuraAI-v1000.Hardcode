@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuraAI v200</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container neon-bg">
+        <header>
+            <h1>NeuraAI v200 🤖</h1>
+            <div class="session-info">
+                Remaining Hours: <span id="session-hours">0</span>
+            </div>
+        </header>
+
+        <main>
+            <div id="chat-window"></div>
+
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Type your message here..." />
+                <button id="send-btn">Send</button>
+                <button id="voice-toggle">🎤 Voice</button>
+            </div>
+
+            <div class="premium-container">
+                <button id="upgrade-btn">Upgrade to Premium $6.99</button>
+            </div>
+        </main>
+
+        <footer>
+            <label for="bg-select">Background:</label>
+            <select id="bg-select">
+                <option value="neon-bg">Neon</option>
+                <option value="dark-bg">Dark</option>
+                <option value="light-bg">Light</option>
+            </select>
+
+            <label for="lang-select">Language:</label>
+            <select id="lang-select">
+                <option value="English">English</option>
+                <option value="French">French</option>
+                <option value="Spanish">Spanish</option>
+            </select>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

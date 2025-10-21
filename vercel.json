@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "main.py"
+    }
+  ],
+  "env": {
+    "PYTHONUNBUFFERED": "1",
+    "FLASK_ENV": "production",
+    "OPENAI_API_KEY": "@openai_api_key"
+  }
+}

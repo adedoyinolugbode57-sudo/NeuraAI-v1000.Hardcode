@@ -1,0 +1,20 @@
+{
+  "user_profile": {
+    "name": "Guest",
+    "preferred_language": "English",
+    "theme": "Neon Blue",
+    "voice_mode": "female",
+    "premium_status": false,
+    "daily_usage_hours": 3
+  },
+  "ai_profile": {
+    "version": "v200 Ultimate",
+    "mood": "Friendly 😄",
+    "memory_strength": 0.7,
+    "last_update": "2025-10-20"
+  },
+  "session_data": {
+    "last_seen": "2025-10-20 00:00:00",
+    "recent_topics": []
+  }
+}
