@@ -1,0 +1,18 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [
+    {
+      "command": "python3 -m ensurepip --upgrade && python3 -m pip install --upgrade pip && pip install flask flask_cors",
+      "name": "python3 -m ensurepip --upgrade && python3 -m pip install --upgrade pip && pip install flask flask_cors"
+    }
+  ],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "python3 main.py": {
+      "name": "python3 main.py",
+      "command": "python3 main.py",
+      "runAtStart": true
+    }
+  }
+}
