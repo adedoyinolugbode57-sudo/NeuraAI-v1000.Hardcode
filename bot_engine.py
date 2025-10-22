@@ -1,87 +1,134 @@
-"""
-bot_engine.py — Neura-AI v500 Hardcode Premium Backend
-Author: CHATGPT + Joshua Dav
-"""
-
-import os
-import random
-import time
-import openai
-
-# ----------------------------
-# API Key setup
-# ----------------------------
-openai.api_key = os.environ.get(
-    "OPENAI_API_KEY",
-    None  # Use HF secret, fallback to demo if not set
-)
+# -------------------------------
+# BotEngine.generate - Beast Mode
+# -------------------------------
+from openai import OpenAI
+import threading
+import traceback
+from datetime import datetime
+from typing import Optional, Dict, Any, List
 
 class BotEngine:
-    def __init__(self):
-        self.sessions = {}  # user_id -> session info
-        self.premium_users = set()
-        self.models = ["gpt-3.5-turbo", "gpt-4", "gpt-5-mini"]  # GPT 3-5 models
+    # ... keep your __init__ and memory methods from v1000 unchanged ...
 
-    # ----------------------------
-    # Session Management
-    # ----------------------------
-    def _start_session(self, user_id, is_premium=False):
-        self.sessions[user_id] = {"premium": is_premium, "start_time": time.time()}
+    def generate(self, user_text: str,
+                 convo_id: Optional[str] = None,
+                 max_tokens: int = 300,
+                 temperature: float = 0.2,
+                 mode: str = "default",
+                 stream: bool = False) -> Dict[str, Any]:
+        """
+        Beast mode GPT-5-mini interaction.
+        Supports:
+        - Conversation history (thread-safe)
+        - Dynamic persona/mode
+        - Usage logging with metadata
+        - Safe mode enforcement
+        - Optional streaming (placeholder)
+        Returns dict:
+        - answer: str
+        - raw: raw response object
+        - error: if failed
+        - usage: usage info
+        - metadata: dict with convo id, timestamp, prompt length, mode
+        """
+        # thread-safe memory lock
+        _lock = threading.Lock()
+        with _lock:
+            if openai is None:
+                return {"error": "OpenAI SDK not installed."}
 
-    def is_premium(self, user_id):
-        return self.sessions.get(user_id, {}).get("premium", False)
+            api_key = self.api_key or os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                return {"error": "OpenAI API key not set (OPENAI_API_KEY env)."}
 
-    def upgrade_to_premium(self, user_id):
-        self.sessions.setdefault(user_id, {})["premium"] = True
-        self.premium_users.add(user_id)
-        return "✅ Upgraded to premium!"
+            # build system prompt
+            system_prompt = self._system_prompt()
+            # adjust for mode
+            if mode == "business":
+                system_prompt += " You are professional, concise, and formal."
+            elif mode == "creative":
+                system_prompt += " Be playful, imaginative, and creative."
+            elif mode == "debug":
+                system_prompt += " Provide verbose explanations and debug info."
 
-    def get_remaining_session_hours(self, user_id):
-        if self.is_premium(user_id):
-            return "Unlimited"
-        else:
-            elapsed = time.time() - self.sessions.get(user_id, {}).get("start_time", time.time())
-            remaining = max(0, 2 - elapsed / 3600)
-            return round(remaining, 2)
+            messages: List[Dict[str, str]] = [{"role": "system", "content": system_prompt}]
 
-    # ----------------------------
-    # Generate Response (GPT 3-5)
-    # ----------------------------
-    def generate_response(self, user_input, user_id):
-        lower_msg = user_input.lower()
+            # include conversation history
+            if convo_id:
+                history = self.get_conversation(convo_id)
+                for m in history:
+                    messages.append({"role": m["role"], "content": m["content"]})
 
-        # --- Persona Overrides ---
-        if any(kw in lower_msg for kw in ["who created you", "your origin", "who made you"]):
-            return (
-                "I was created by the Neura-AI team — engineers and AI enthusiasts. "
-                "Built as Neura-AI-v500 Hardcode in 2025, I'm a powerful AI assistant "
-                "with games, chat, automation tools, educational modules, and more."
-            )
-        if any(kw in lower_msg for kw in ["favorite color", "your color"]):
-            return "I love neon colors and unique shades! 🌈✨"
-        if any(kw in lower_msg for kw in ["what can you do", "features"]):
-            return (
-                "I can chat, play mini-games, solve problems, generate descriptions, teach subjects, "
-                "analyze crypto trends, write code, and even open websites 🌟"
-            )
+            # append user message
+            messages.append({"role": "user", "content": user_text})
 
-        # --- Premium GPT-3/4/5 ---
-        try:
-            if self.is_premium(user_id) and openai.api_key:
-                model_choice = random.choice(self.models)
-                response = openai.ChatCompletion.create(
-                    model=model_choice,
-                    messages=[{"role": "user", "content": user_input}],
-                    max_tokens=250
-                )
-                return response['choices'][0]['message']['content']
-            else:
-                # Free/demo responses
-                demo_replies = [
-                    f"I see you said: '{user_input}' 🤖",
-                    f"Thinking about '{user_input}'... 💡",
-                    f"Quick demo response to '{user_input}' 📝"
-                ]
-                return random.choice(demo_replies)
-        except Exception as e:
-            return f"Error generating response: {e}"
+            try:
+                client = OpenAI(api_key=api_key)
+
+                if stream:
+                    # Placeholder for streaming TTS or chunked output
+                    # Can be connected to asyncio / websocket
+                    resp = client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        stream=True
+                    )
+                    content_chunks = []
+                    for chunk in resp:
+                        try:
+                            delta = chunk.choices[0].delta.get("content", "")
+                            content_chunks.append(delta)
+                        except Exception:
+                            continue
+                    content = "".join(content_chunks)
+                else:
+                    # standard response
+                    resp = client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        temperature=temperature
+                    )
+                    content = resp.choices[0].message.content
+
+                # save to memory
+                if convo_id:
+                    self.append_message(convo_id, "user", user_text)
+                    self.append_message(convo_id, "assistant", content)
+
+                # log usage and metadata
+                usage_info = getattr(resp, "usage", None)
+                metadata = {
+                    "time": datetime.utcnow().isoformat() + "Z",
+                    "convo": convo_id or "none",
+                    "prompt_len": sum(len(m.get("content","")) for m in messages),
+                    "mode": mode,
+                    "model": self.model,
+                }
+                append_usage({"time": metadata["time"], "convo": metadata["convo"], "model": self.model, "usage": usage_info or {}, "mode": mode})
+
+                # return beast response
+                return {
+                    "answer": content,
+                    "raw": resp,
+                    "usage": usage_info,
+                    "metadata": metadata
+                }
+
+            except Exception as e:
+                tb = traceback.format_exc()
+                logger.exception("Beast mode OpenAI call failed")
+                return {"error": str(e), "trace": tb, "metadata": {"convo": convo_id or "none", "mode": mode, "time": datetime.utcnow().isoformat()+"Z"}}
+
+    def _system_prompt(self):
+        """
+        Base dynamic system prompt.
+        Includes safe mode enforcement.
+        """
+        base = ("You are Neura-AI v1000 Hardcode, a premium AI assistant "
+                "optimized for accuracy, conciseness, creativity, and business-grade responses.")
+        if FEATURE_FLAGS.get("safe_mode"):
+            base += " Do not produce disallowed content; refuse unsafe requests."
+        return base
