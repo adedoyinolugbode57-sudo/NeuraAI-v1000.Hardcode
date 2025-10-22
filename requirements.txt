@@ -1,26 +1,6 @@
-# --- Core backend ---
 flask
 flask-cors
-gunicorn
-
-# --- AI + language tools ---
 openai
-nltk
-transformers
-tqdm
-
-# --- Data / memory handling ---
-jsonpickle
 python-dotenv
 requests
-rich
-
-# --- Voice + media (optional premium features) ---
-gtts
-playsound==1.2.2
-pydub
-
-# --- Automation & utilities ---
-beautifulsoup4
-httpx
-schedule
+gradio
